@@ -41,20 +41,20 @@ jobs:
           fi
 
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up yq
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.53.3
         with:
           cmd: yq --version
 
       - name: Update image tag
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.53.3
         with:
           cmd: yq -i '.image.tag = "${{ steps.inputs.outputs.image_tag }}"' 'envs/${{ steps.inputs.outputs.environment }}/values.yaml'
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: "promote/${{ steps.inputs.outputs.environment }}/${{ steps.inputs.outputs.image_tag }}"
           title: "Promote ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
