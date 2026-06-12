@@ -1,0 +1,17 @@
+package kubernetes.network
+
+import rego.v1
+
+deny contains msg if {
+  input.kind == "Service"
+  input.spec.type == "LoadBalancer"
+  msg := sprintf("Service %s must not be type LoadBalancer; use Ingress instead", [input.metadata.name])
+}
+
+deny contains msg if {
+  input.kind == "Ingress"
+  input.metadata.namespace == "ssvd-prod"
+  input.metadata.annotations["alb.ingress.kubernetes.io/scheme"] == "internet-facing"
+  not input.metadata.annotations["alb.ingress.kubernetes.io/wafv2-acl-arn"]
+  msg := sprintf("Production Ingress %s must attach an AWS WAFv2 ACL", [input.metadata.name])
+}

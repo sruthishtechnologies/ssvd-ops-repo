@@ -1,0 +1,143 @@
+name: Validate GitOps
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  helm:
+    name: Helm lint and render
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - dev
+          - staging
+          - prod
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - name: Lint chart
+        run: helm lint charts/myapp -f "envs/${{ matrix.environment }}/values.yaml"
+
+      - name: Render manifests
+        run: |
+          mkdir -p rendered
+          helm template "myapp-${{ matrix.environment }}" charts/myapp \
+            -f "envs/${{ matrix.environment }}/values.yaml" \
+            --namespace "ssvd-${{ matrix.environment }}" \
+            > "rendered/${{ matrix.environment }}.yaml"
+
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-${{ matrix.environment }}
+          path: rendered/${{ matrix.environment }}.yaml
+
+  conftest:
+    name: OPA policy checks
+    runs-on: ubuntu-latest
+    needs: helm
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - dev
+          - staging
+          - prod
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download rendered manifests
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-${{ matrix.environment }}
+          path: rendered
+
+      - name: Set up Conftest
+        uses: open-policy-agent/setup-conftest@v0.3.0
+
+      - name: Run Kubernetes policies
+        run: conftest test "rendered/${{ matrix.environment }}.yaml" --policy policies/conftest/kubernetes
+
+  checkov:
+    name: Checkov IaC scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - name: Render manifests
+        run: |
+          mkdir -p rendered
+          for env in dev staging prod; do
+            helm template "myapp-${env}" charts/myapp \
+              -f "envs/${env}/values.yaml" \
+              --namespace "ssvd-${env}" \
+              > "rendered/${env}.yaml"
+          done
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: rendered
+          config_file: .checkov.yaml
+          output_format: cli,sarif
+          output_file_path: console,checkov.sarif
+
+      - name: Upload Checkov SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov.sarif
+
+  gitleaks:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  yaml:
+    name: YAML validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Run yamllint
+        run: yamllint .

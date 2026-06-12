@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/ssvd-bhoomi-report
+  tag: "first-copy"
+
+autoscaling:
+  enabled: false
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+  hosts:
+    - host: bhoomi-dev.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi

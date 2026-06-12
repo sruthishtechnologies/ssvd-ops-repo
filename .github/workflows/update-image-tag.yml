@@ -1,0 +1,66 @@
+name: Update Image Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to update
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      image_tag:
+        description: Docker image tag to deploy
+        required: true
+        type: string
+  repository_dispatch:
+    types:
+      - promote-image
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: Patch environment values
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve inputs
+        id: inputs
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "environment=${{ github.event.client_payload.environment }}" >> "${GITHUB_OUTPUT}"
+            echo "image_tag=${{ github.event.client_payload.image_tag }}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "environment=${{ inputs.environment }}" >> "${GITHUB_OUTPUT}"
+            echo "image_tag=${{ inputs.image_tag }}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up yq
+        uses: mikefarah/yq@v4.44.3
+        with:
+          cmd: yq --version
+
+      - name: Update image tag
+        uses: mikefarah/yq@v4.44.3
+        with:
+          cmd: yq -i '.image.tag = "${{ steps.inputs.outputs.image_tag }}"' 'envs/${{ steps.inputs.outputs.environment }}/values.yaml'
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: "promote/${{ steps.inputs.outputs.environment }}/${{ steps.inputs.outputs.image_tag }}"
+          title: "Promote ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
+          commit-message: "Promote ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
+          body: |
+            Updates `${{ steps.inputs.outputs.environment }}` image tag to `${{ steps.inputs.outputs.image_tag }}`.
+          labels: |
+            deployment
+            ${{ steps.inputs.outputs.environment }}

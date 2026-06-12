@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ssvd-apps
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sruthishtechnologies/ssvd-ops-repo.git
+    targetRevision: main
+    path: argocd-apps
+    directory:
+      recurse: false
+      include: "myapp-*.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
