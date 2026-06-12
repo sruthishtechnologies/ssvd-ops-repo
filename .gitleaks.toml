@@ -8,4 +8,4 @@ id = "aws-account-id"
 description = "AWS account IDs are not secrets by themselves"
 regex = '''\b[0-9]{12}\b'''
 tags = ["aws"]
-allowlist = { regexes = ['''123456789012'''] }
+allowlist = { regexes = ['''123456789012''', '''824090260951'''] }
