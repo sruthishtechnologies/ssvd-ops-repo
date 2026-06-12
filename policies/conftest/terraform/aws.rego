@@ -1,14 +1,12 @@
 package terraform.aws
 
-import rego.v1
-
-deny contains msg if {
+deny[msg] {
   resource := input.resource.aws_s3_bucket_public_access_block[_]
   resource.block_public_acls == false
   msg := "S3 public access block must block public ACLs"
 }
 
-deny contains msg if {
+deny[msg] {
   resource := input.resource.aws_security_group[_]
   ingress := resource.ingress[_]
   ingress.cidr_blocks[_] == "0.0.0.0/0"
