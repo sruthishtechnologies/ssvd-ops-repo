@@ -68,11 +68,13 @@ jobs:
           name: rendered-${{ matrix.environment }}
           path: rendered
 
-      - name: Set up Conftest
-        uses: open-policy-agent/setup-conftest@v0.3.0
-
       - name: Run Kubernetes policies
-        run: conftest test "rendered/${{ matrix.environment }}.yaml" --policy policies/conftest/kubernetes
+        run: |
+          docker run --rm \
+            -v "${PWD}:/project" \
+            -w /project \
+            openpolicyagent/conftest:v0.56.0 \
+            test "rendered/${{ matrix.environment }}.yaml" --policy policies/conftest/kubernetes
 
   checkov:
     name: Checkov IaC scan
@@ -106,7 +108,7 @@ jobs:
 
       - name: Upload Checkov SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: checkov.sarif
 
