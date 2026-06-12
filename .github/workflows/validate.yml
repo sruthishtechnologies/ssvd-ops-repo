@@ -80,7 +80,7 @@ jobs:
           conftest --version
 
       - name: Run Kubernetes policies
-        run: conftest test "rendered/${{ matrix.environment }}.yaml" --policy policies/conftest/kubernetes
+        run: conftest test "rendered/${{ matrix.environment }}.yaml" --policy policies/conftest/kubernetes --all-namespaces
 
   checkov:
     name: Checkov IaC scan

@@ -65,6 +65,10 @@ deny[msg] {
 deny[msg] {
   input.kind == "Deployment"
   container := input.spec.template.spec.containers[_]
-  not container.securityContext.capabilities.drop[_] == "ALL"
+  not drops_all_capabilities(container)
   msg := sprintf("Deployment %s container %s must drop all Linux capabilities", [input.metadata.name, container.name])
+}
+
+drops_all_capabilities(container) {
+  container.securityContext.capabilities.drop[_] == "ALL"
 }
