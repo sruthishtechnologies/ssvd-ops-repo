@@ -17,7 +17,7 @@ OPS_REPO_DISPATCH_TOKEN
   if: github.event_name == 'push'
   env:
     GH_TOKEN: ${{ secrets.OPS_REPO_DISPATCH_TOKEN }}
-    IMAGE_TAG: sha-${{ github.sha }}
+    IMAGE_TAG: main
   run: |
     gh api repos/sruthishtechnologies/ssvd-ops-repo/dispatches \
       --method POST \
