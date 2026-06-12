@@ -1,9 +1,12 @@
 extends: default
 
+ignore: |
+  charts/myapp/templates/*.yaml
+
 rules:
   line-length:
-    max: 140
-    level: warning
+    max: 160
+    level: error
   document-start: disable
   truthy:
     allowed-values:
