@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: 824090260951.dkr.ecr.ap-south-2.amazonaws.com/ssvd-bhoomi-report
   pullPolicy: Always
-  tag: "main"
+  tag: "sha-84b3fc4804d85b2c28a4d6868f77181a3947c8e0"
 
 imagePullSecrets: []
 nameOverride: ""

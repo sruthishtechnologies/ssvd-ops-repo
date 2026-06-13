@@ -17,7 +17,7 @@ OPS_REPO_DISPATCH_TOKEN
   if: github.event_name == 'push'
   env:
     GH_TOKEN: ${{ secrets.OPS_REPO_DISPATCH_TOKEN }}
-    IMAGE_TAG: main
+    IMAGE_TAG: sha-${{ github.sha }}
   run: |
     gh api repos/sruthishtechnologies/ssvd-ops-repo/dispatches \
       --method POST \
@@ -32,3 +32,7 @@ envs/<environment>/values.yaml
 ```
 
 Argo CD deploys after the pull request is merged into `main`.
+
+Use immutable `sha-<git-sha>` image tags for promotions. The moving branch tag
+such as `main` may still be pushed for convenience, but it should not be used as
+the promoted environment value because it does not create a GitOps diff.
