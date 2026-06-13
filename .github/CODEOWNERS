@@ -1,7 +1,12 @@
 * @sruthishtechnologies
 
-/charts/ @sruthishtechnologies
+/apps/ @sruthishtechnologies
+/apps/srisatvam/ @sruthishtechnologies
+/envs/dev/values/srisatvam/ @sruthishtechnologies
+/envs/staging/values/srisatvam/ @sruthishtechnologies
 /envs/prod/ @sruthishtechnologies
-/argocd-apps/ @sruthishtechnologies
+/envs/*/apps/ @sruthishtechnologies
+/bootstrap/ @sruthishtechnologies
+/platform/ @sruthishtechnologies
 /policies/ @sruthishtechnologies
 /.github/workflows/ @sruthishtechnologies

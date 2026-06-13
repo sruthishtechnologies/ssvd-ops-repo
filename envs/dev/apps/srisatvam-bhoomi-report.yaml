@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: myapp-staging
+  name: srisatvam-bhoomi-report-dev
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -10,14 +10,14 @@ spec:
   source:
     repoURL: https://github.com/sruthishtechnologies/ssvd-ops-repo.git
     targetRevision: main
-    path: charts/myapp
+    path: apps/srisatvam/bhoomi-report/chart
     helm:
-      releaseName: myapp
+      releaseName: bhoomi-report
       valueFiles:
-        - ../../envs/staging/values.yaml
+        - ../../../../envs/dev/values/srisatvam/bhoomi-report.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: ssvd-staging
+    namespace: ssvd-dev
   syncPolicy:
     automated:
       prune: true

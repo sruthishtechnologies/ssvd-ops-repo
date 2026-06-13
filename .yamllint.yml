@@ -1,7 +1,7 @@
 extends: default
 
 ignore: |
-  charts/myapp/templates/*.yaml
+  apps/*/*/chart/templates/*.yaml
 
 rules:
   line-length:

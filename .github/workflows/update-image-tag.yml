@@ -3,6 +3,16 @@ name: Update Image Tag
 on:
   workflow_dispatch:
     inputs:
+      team:
+        description: Team folder to update
+        required: false
+        default: srisatvam
+        type: string
+      application:
+        description: Application values file to update
+        required: false
+        default: bhoomi-report
+        type: string
       environment:
         description: Environment to update
         required: true
@@ -33,12 +43,47 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "environment=${{ github.event.client_payload.environment }}" >> "${GITHUB_OUTPUT}"
-            echo "image_tag=${{ github.event.client_payload.image_tag }}" >> "${GITHUB_OUTPUT}"
+            team="${{ github.event.client_payload.team }}"
+            application="${{ github.event.client_payload.application }}"
+            environment="${{ github.event.client_payload.environment }}"
+            image_tag="${{ github.event.client_payload.image_tag }}"
           else
-            echo "environment=${{ inputs.environment }}" >> "${GITHUB_OUTPUT}"
-            echo "image_tag=${{ inputs.image_tag }}" >> "${GITHUB_OUTPUT}"
+            team="${{ inputs.team }}"
+            application="${{ inputs.application }}"
+            environment="${{ inputs.environment }}"
+            image_tag="${{ inputs.image_tag }}"
           fi
+
+          team="${team:-srisatvam}"
+          application="${application:-bhoomi-report}"
+
+          case "${environment}" in
+            dev|staging|prod) ;;
+            *) echo "Unsupported environment: ${environment}" >&2; exit 1 ;;
+          esac
+
+          case "${team}" in
+            ""|*[^a-zA-Z0-9._-]*) echo "Invalid team: ${team}" >&2; exit 1 ;;
+          esac
+
+          case "${application}" in
+            ""|*[^a-zA-Z0-9._-]*) echo "Invalid application: ${application}" >&2; exit 1 ;;
+          esac
+
+          if [ -z "${image_tag}" ]; then
+            echo "image_tag is required" >&2
+            exit 1
+          fi
+
+          values_file="envs/${environment}/values/${team}/${application}.yaml"
+
+          {
+            echo "team=${team}"
+            echo "application=${application}"
+            echo "environment=${environment}"
+            echo "image_tag=${image_tag}"
+            echo "values_file=${values_file}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Check out repository
         uses: actions/checkout@v5
@@ -48,19 +93,22 @@ jobs:
         with:
           cmd: yq --version
 
+      - name: Validate target values file
+        run: test -f "${{ steps.inputs.outputs.values_file }}"
+
       - name: Update image tag
         uses: mikefarah/yq@v4.44.3
         with:
-          cmd: yq -i '.image.tag = "${{ steps.inputs.outputs.image_tag }}"' 'envs/${{ steps.inputs.outputs.environment }}/values.yaml'
+          cmd: yq -i '.image.tag = "${{ steps.inputs.outputs.image_tag }}"' '${{ steps.inputs.outputs.values_file }}'
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: "promote/${{ steps.inputs.outputs.environment }}/${{ steps.inputs.outputs.image_tag }}"
-          title: "Promote ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
-          commit-message: "Promote ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
+          branch: "promote/${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }}/${{ steps.inputs.outputs.environment }}/${{ steps.inputs.outputs.image_tag }}"
+          title: "Promote ${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }} ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
+          commit-message: "Promote ${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }} ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
           body: |
-            Updates `${{ steps.inputs.outputs.environment }}` image tag to `${{ steps.inputs.outputs.image_tag }}`.
+            Updates `${{ steps.inputs.outputs.values_file }}` image tag to `${{ steps.inputs.outputs.image_tag }}`.
           labels: |
             deployment
             ${{ steps.inputs.outputs.environment }}

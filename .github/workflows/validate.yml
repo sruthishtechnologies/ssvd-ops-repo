@@ -14,6 +14,9 @@ jobs:
   helm:
     name: Helm lint and render
     runs-on: ubuntu-latest
+    env:
+      CHART_PATH: apps/srisatvam/bhoomi-report/chart
+      APP_NAME: bhoomi-report
     strategy:
       fail-fast: false
       matrix:
@@ -31,13 +34,13 @@ jobs:
           version: v3.15.4
 
       - name: Lint chart
-        run: helm lint charts/myapp -f "envs/${{ matrix.environment }}/values.yaml"
+        run: helm lint "${CHART_PATH}" -f "envs/${{ matrix.environment }}/values/srisatvam/bhoomi-report.yaml"
 
       - name: Render manifests
         run: |
           mkdir -p rendered
-          helm template "myapp-${{ matrix.environment }}" charts/myapp \
-            -f "envs/${{ matrix.environment }}/values.yaml" \
+          helm template "${APP_NAME}-${{ matrix.environment }}" "${CHART_PATH}" \
+            -f "envs/${{ matrix.environment }}/values/srisatvam/bhoomi-report.yaml" \
             --namespace "ssvd-${{ matrix.environment }}" \
             > "rendered/${{ matrix.environment }}.yaml"
 
@@ -85,6 +88,9 @@ jobs:
   checkov:
     name: Checkov IaC scan
     runs-on: ubuntu-latest
+    env:
+      CHART_PATH: apps/srisatvam/bhoomi-report/chart
+      APP_NAME: bhoomi-report
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -98,8 +104,8 @@ jobs:
         run: |
           mkdir -p rendered
           for env in dev staging prod; do
-            helm template "myapp-${env}" charts/myapp \
-              -f "envs/${env}/values.yaml" \
+            helm template "${APP_NAME}-${env}" "${CHART_PATH}" \
+              -f "envs/${env}/values/srisatvam/bhoomi-report.yaml" \
               --namespace "ssvd-${env}" \
               > "rendered/${env}.yaml"
           done

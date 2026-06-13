@@ -17,18 +17,24 @@ OPS_REPO_DISPATCH_TOKEN
   if: github.event_name == 'push'
   env:
     GH_TOKEN: ${{ secrets.OPS_REPO_DISPATCH_TOKEN }}
+    TEAM: srisatvam
+    APPLICATION: bhoomi-report
+    ENVIRONMENT: dev
     IMAGE_TAG: sha-${{ github.sha }}
   run: |
     gh api repos/sruthishtechnologies/ssvd-ops-repo/dispatches \
       --method POST \
       --field event_type=promote-image \
-      --raw-field client_payload="{\"environment\":\"dev\",\"image_tag\":\"${IMAGE_TAG}\"}"
+      --raw-field client_payload="$(
+        printf '{"team":"%s","application":"%s","environment":"%s","image_tag":"%s"}' \
+          "${TEAM}" "${APPLICATION}" "${ENVIRONMENT}" "${IMAGE_TAG}"
+      )"
 ```
 
 The ops repo opens a pull request that updates:
 
 ```text
-envs/<environment>/values.yaml
+envs/<environment>/values/<team>/<application>.yaml
 ```
 
 Argo CD deploys after the pull request is merged into `main`.

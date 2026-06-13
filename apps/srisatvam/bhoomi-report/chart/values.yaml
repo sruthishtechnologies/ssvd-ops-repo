@@ -70,7 +70,7 @@ ingress:
   className: alb
   annotations: {}
   hosts:
-    - host: myapp.example.com
+    - host: bhoomi.example.com
       paths:
         - path: /
           pathType: Prefix

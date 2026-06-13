@@ -1,24 +1,30 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: myapp-dev
+  name: srisatvam-bhoomi-report-prod
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: https://github.com/sruthishtechnologies/ssvd-ops-repo.git
     targetRevision: main
-    path: charts/myapp
+    path: apps/srisatvam/bhoomi-report/chart
     helm:
-      releaseName: myapp
+      releaseName: bhoomi-report
       valueFiles:
-        - ../../envs/dev/values.yaml
+        - ../../../../envs/prod/values/srisatvam/bhoomi-report.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: ssvd-dev
+    namespace: ssvd-prod
   syncPolicy:
     automated:
-      prune: true
+      prune: false
       selfHeal: true
+      allowEmpty: false
     syncOptions:
       - CreateNamespace=true
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+  revisionHistoryLimit: 10
