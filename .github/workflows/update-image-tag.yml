@@ -76,6 +76,7 @@ jobs:
           fi
 
           values_file="envs/${environment}/values/${team}/${application}.yaml"
+          branch="promote/${team}/${application}/${environment}/${image_tag}"
 
           {
             echo "team=${team}"
@@ -83,6 +84,7 @@ jobs:
             echo "environment=${environment}"
             echo "image_tag=${image_tag}"
             echo "values_file=${values_file}"
+            echo "branch=${branch}"
           } >> "${GITHUB_OUTPUT}"
 
       - name: Check out repository
@@ -104,9 +106,13 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: "promote/${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }}/${{ steps.inputs.outputs.environment }}/${{ steps.inputs.outputs.image_tag }}"
-          title: "Promote ${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }} ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
-          commit-message: "Promote ${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }} ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}"
+          branch: ${{ steps.inputs.outputs.branch }}
+          title: >-
+            Promote ${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }}
+            ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}
+          commit-message: >-
+            Promote ${{ steps.inputs.outputs.team }}/${{ steps.inputs.outputs.application }}
+            ${{ steps.inputs.outputs.environment }} to ${{ steps.inputs.outputs.image_tag }}
           body: |
             Updates `${{ steps.inputs.outputs.values_file }}` image tag to `${{ steps.inputs.outputs.image_tag }}`.
           labels: |
