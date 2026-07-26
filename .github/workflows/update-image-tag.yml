@@ -88,10 +88,10 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up yq
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.53.3
         with:
           cmd: yq --version
 
@@ -99,12 +99,12 @@ jobs:
         run: test -f "${{ steps.inputs.outputs.values_file }}"
 
       - name: Update image tag
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.53.3
         with:
           cmd: yq -i '.image.tag = "${{ steps.inputs.outputs.image_tag }}"' '${{ steps.inputs.outputs.values_file }}'
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: ${{ steps.inputs.outputs.branch }}
           title: >-
